@@ -1,7 +1,11 @@
 package;
 
+import flixel.group.FlxGroup;
+import flixel.FlxG;
+import openfl.utils.AssetCache;
 import flixel.math.FlxRandom;
-import openfl.utils.Assets;
+import flixel.math.FlxMath;
+import lime.utils.Assets;
 
 using StringTools;
 
@@ -16,7 +20,7 @@ class CoolUtil
 		difficultyArray = new Array<String>();
 		difficultyArray.push(LanguageManager.getTextString('play_easy'));
 		difficultyArray.push(LanguageManager.getTextString('play_normal'));
-		difficultyArray.push(LanguageManager.getTextString('play_hard'));
+		difficultyArray.push('Mania');
 	}
 
 	public static function difficultyString():String
@@ -28,6 +32,7 @@ class CoolUtil
 			case 16:
 				return exploitationDifficulties[new FlxRandom().int(0, exploitationDifficulties.length - 1)];
 			default:
+				if (PlayState.shaggyVoice && PlayState.storyDifficulty == 0) return 'Canon';
 				return difficultyArray[PlayState.storyDifficulty];
 
 		}
@@ -97,6 +102,10 @@ class CoolUtil
 		return minAndMaxs;
 	}
 
+	public static function cacheImage(image:String)
+	{
+		Assets.cache.image.set(image, lime.graphics.Image.fromFile(image));
+	}
 	public static function isArrayEqualTo(array1:Array<Dynamic>, array2:Array<Dynamic>)
 	{
 		if (array1.length != array2.length)

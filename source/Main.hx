@@ -15,24 +15,52 @@ class Main extends Sprite
 {
 	var gameWidth:Int = 1280; // Width of the game in pixels (might be less / more in actual pixels depending on your zoom).
 	var gameHeight:Int = 720; // Height of the game in pixels (might be less / more in actual pixels depending on your zoom).
-	var initialState:Class<FlxState> = StartStateSelector; // The FlxState the game starts with.
+	var initialState:Class<FlxState> = TitleState; // The FlxState the game starts with.
 	var zoom:Float = -1; // If -1, zoom is automatically calculated to fit the window dimensions.
-	public static var framerate:Int = 60; // How many frames per second the game should run at.
+	public static var framerate:Int = 144; // How many frames per second the game should run at.
 	var skipSplash:Bool = false; // Whether to skip the flixel splash screen that appears in release mode.
 	var startFullscreen:Bool = false; // Whether to start the game in fullscreen on desktop targets
+	public static var keyAmmo:Array<Int> = [4, 5, 6, 7, 9, 12];
+	public static var dataJump:Array<Int> = [8, 10, 12, 14, 18, 24];
 
 	public static var fps:FpsDisplay;
 
-	public static var applicationName:String = "Friday Night Funkin' | VS. Dave and Bambi 3.0b";
+	public static var applicationName:String = "Friday Night Funkin' | VS. Dave and Bambi 3.0b | Extra Keys Addon 2.0.2";
 
 	// You can pretty much ignore everything from here on - your code should go in your states.
+
+	public static function main():Void
+	{
+		Lib.current.addChild(new Main());
+	}
 
 	public function new()
 	{
 		super();
 
-		SUtil.uncaughtErrorHandler();
+		if (stage != null)
+			init();
+		else
+			addEventListener(Event.ADDED_TO_STAGE, init);
+	}
 
+	private function init(?E:Event):Void
+	{
+		if (hasEventListener(Event.ADDED_TO_STAGE))
+		{
+			removeEventListener(Event.ADDED_TO_STAGE, init);
+		}
+
+		setupGame();
+	}
+
+	public static function toggleFuckedFPS(toggle:Bool)
+	{
+		fps.fuckFps = toggle;
+	}
+
+	private function setupGame():Void
+	{
 		var stageWidth:Int = Lib.current.stage.stageWidth;
 		var stageHeight:Int = Lib.current.stage.stageHeight;
 
@@ -45,20 +73,14 @@ class Main extends Sprite
 			gameHeight = Math.ceil(stageHeight / zoom);
 		}
 
-		initialState = StartStateSelector;
+		initialState = TitleState;
+                addChild(new FlxGame(gameWidth, gameHeight, initialState, #if (flixel < "5.2.2") zoom, #end framerate, framerate, skipSplash, startFullscreen));
 
-		SUtil.check();
-
-		addChild(new FlxGame(gameWidth, gameHeight, initialState, zoom, framerate, framerate, skipSplash, startFullscreen));
-
+		#if !mobile
 		fps = new FpsDisplay(10, 3, 0xFFFFFF);
 		var fpsFormat = new TextFormat("Comic Sans MS Bold", 15, 0xFFFFFF, true);
 		fps.defaultTextFormat = fpsFormat;
 		addChild(fps);
-	}
-
-	public static function toggleFuckedFPS(toggle:Bool)
-	{
-		fps.fuckFps = toggle;
+		#end
 	}
 }

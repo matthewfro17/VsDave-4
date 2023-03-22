@@ -22,6 +22,8 @@ import flixel.util.FlxTimer;
 import Discord.DiscordClient;
 #end
 
+import hxcodec.VideoHandler;
+
 using StringTools;
 
 class StoryMenuState extends MusicBeatState
@@ -59,9 +61,6 @@ class StoryMenuState extends MusicBeatState
 
 	override function create()
 	{
-		Paths.clearStoredMemory();
-		Paths.clearUnusedMemory();
-
 		awaitingExploitation = (FlxG.save.data.exploitationState == 'awaiting');
 
 		if (FlxG.save.data.masterWeekUnlocked)
@@ -167,11 +166,6 @@ class StoryMenuState extends MusicBeatState
 		{
 			changeWeek(0);
 		}
-
-		#if mobile
-		addVirtualPad(LEFT_RIGHT, A_B);
-		#end
-
 		super.create();
 	}
 
@@ -213,8 +207,7 @@ class StoryMenuState extends MusicBeatState
 			movedBack = true;
 			FlxG.switchState(new MainMenuState());
 		}
-
-		if (FlxG.keys.justPressed.SEVEN #if android || FlxG.android.justReleased.BACK #end && !FlxG.save.data.masterWeekUnlocked)
+		if (FlxG.keys.justPressed.SEVEN && !FlxG.save.data.masterWeekUnlocked)
 		{
 			FlxG.sound.music.fadeOut(1, 0);
 			FlxG.camera.shake(0.02, 5.1);
@@ -224,6 +217,7 @@ class StoryMenuState extends MusicBeatState
 				FlxG.save.data.hasPlayedMasterWeek = false;
 				awaitingToPlayMasterWeek = true;
 				FlxG.save.flush();
+
 				FlxG.resetState();
 			});
 			FlxG.sound.play(Paths.sound('doom'));
@@ -252,7 +246,7 @@ class StoryMenuState extends MusicBeatState
 			PlayState.isStoryMode = true;
 			selectedWeek = true;
 
-			PlayState.SONG = Song.loadFromJson(PlayState.storyPlaylist[0].toLowerCase());
+			PlayState.SONG = Song.loadFromJson(Highscore.formatSong(PlayState.storyPlaylist[0].toLowerCase(), 1));
 			PlayState.storyWeek = curWeek;
 			PlayState.campaignScore = 0;
 			new FlxTimer().start(1, function(tmr:FlxTimer)
@@ -270,7 +264,7 @@ class StoryMenuState extends MusicBeatState
 						{
 							LoadingState.loadAndSwitchState(new PlayState(), true);
 						}
-						video.playVideo(SUtil.getPath() + Paths.video('daveCutscene'));
+						video.playVideo(Paths.video('daveCutscene'));
 					case 5:
 						if (!FlxG.save.data.hasPlayedMasterWeek)
 						{
@@ -355,7 +349,7 @@ class StoryMenuState extends MusicBeatState
 		//txtTracklist.text = txtTracklist.text += " - ";
 
 		#if !switch
-		intendedScore = Highscore.getWeekScore(curWeek);
+		intendedScore = Highscore.getWeekScore(curWeek, 1);
 		#end
 	}
 }

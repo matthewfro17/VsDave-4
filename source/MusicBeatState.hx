@@ -1,15 +1,11 @@
 package;
 
-#if mobile
-import mobile.MobileControls;
-import mobile.flixel.FlxVirtualPad;
-import flixel.FlxCamera;
-import flixel.input.actions.FlxActionInput;
-import flixel.util.FlxDestroyUtil;
-#end
 import Conductor.BPMChangeEvent;
 import flixel.FlxG;
+import flixel.addons.transition.FlxTransitionableState;
 import flixel.addons.ui.FlxUIState;
+import flixel.math.FlxRect;
+import flixel.util.FlxTimer;
 
 class MusicBeatState extends FlxUIState
 {
@@ -23,112 +19,6 @@ class MusicBeatState extends FlxUIState
 	inline function get_controls():Controls
 		return PlayerSettings.player1.controls;
 
-	#if mobile
-	var mobileControls:MobileControls;
-	var virtualPad:FlxVirtualPad;
-	var trackedinputsVirtualPad:Array<FlxActionInput> = [];
-	var trackedinputsMobileControls:Array<FlxActionInput> = [];
-
-	public function addVirtualPad(DPad:FlxDPadMode, Action:FlxActionMode)
-	{
-		virtualPad = new FlxVirtualPad(DPad, Action);
-		add(virtualPad);
-
-		controls.setVirtualPad(virtualPad, DPad, Action);
-		trackedinputsVirtualPad = controls.trackedinputs;
-		controls.trackedinputs = [];
-	}
-
-	public function removeVirtualPad()
-	{
-		if (trackedinputsVirtualPad != [])
-			controls.removeControlsInput(trackedinputsVirtualPad);
-
-		if (virtualPad != null)
-			remove(virtualPad);
-	}
-
-	public function addMobileControls(usesDodge:Bool = false, DefaultDrawTarget:Bool = true)
-	{
-		mobileControls = new MobileControls(usesDodge);
-
-		switch (MobileControls.mode)
-		{
-			case 'Pad-Right' | 'Pad-Left' | 'Pad-Custom':
-				controls.setVirtualPad(mobileControls.virtualPad, RIGHT_FULL, NONE);
-			case 'Pad-Duo':
-				controls.setVirtualPad(mobileControls.virtualPad, BOTH_FULL, NONE);
-			case 'Hitbox':
-				controls.setHitBox(mobileControls.hitbox, usesDodge ? SPACE : DEFAULT);
-			case 'Keyboard': // do nothing
-		}
-
-		trackedinputsMobileControls = controls.trackedinputs;
-		controls.trackedinputs = [];
-
-		var camControls:FlxCamera = new FlxCamera();
-		FlxG.cameras.add(camControls, DefaultDrawTarget);
-		camControls.bgColor.alpha = 0;
-
-		mobileControls.cameras = [camControls];
-		mobileControls.visible = false;
-		add(mobileControls);
-
-		if (usesDodge && (MobileControls.mode != 'Hitbox' && MobileControls.mode != 'Keyboard'))
-		{
-			addVirtualPad(NONE, SPACE);
-			virtualPad.cameras = [camControls];
-		}
-	}
-
-	public function removeMobileControls()
-	{
-		if (trackedinputsMobileControls != [])
-			controls.removeControlsInput(trackedinputsMobileControls);
-
-		if (mobileControls != null)
-			remove(mobileControls);
-	}
-
-	public function addVirtualPadCamera(DefaultDrawTarget:Bool = true)
-	{
-		if (virtualPad != null)
-		{
-			var camControls:FlxCamera = new FlxCamera();
-			FlxG.cameras.add(camControls, DefaultDrawTarget);
-			camControls.bgColor.alpha = 0;
-			virtualPad.cameras = [camControls];
-		}
-	}
-	#end
-
-	override function destroy()
-	{
-		#if mobile
-		if (trackedinputsVirtualPad != [])
-			controls.removeControlsInput(trackedinputsVirtualPad);
-
-		if (trackedinputsMobileControls != [])
-			controls.removeControlsInput(trackedinputsMobileControls);
-		#end
-
-		super.destroy();
-
-		#if mobile
-		if (virtualPad != null)
-		{
-			virtualPad = FlxDestroyUtil.destroy(virtualPad);
-			virtualPad = null;
-		}
-
-		if (mobileControls != null)
-		{
-			mobileControls = FlxDestroyUtil.destroy(mobileControls);
-			mobileControls = null;
-		}
-		#end
-	}
-
 	override function create()
 	{
 		if (transIn != null)
@@ -136,6 +26,16 @@ class MusicBeatState extends FlxUIState
 
 		super.create();
 	}
+
+	public function fancyOpenURL(schmancy:String)
+	{
+		#if linux
+		Sys.command('/usr/bin/xdg-open', [schmancy, "&"]);
+		#else
+		FlxG.openURL(schmancy);
+		#end
+	}
+
 
 	override function update(elapsed:Float)
 	{
