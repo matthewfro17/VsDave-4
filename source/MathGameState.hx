@@ -41,9 +41,6 @@ class MathGameState extends MusicBeatState
 
    override function create()
    {
-		Paths.clearStoredMemory();
-		Paths.clearUnusedMemory();
-
       persistentUpdate = persistentDraw = true;
 
       baldiAudio = new FlxSound();
@@ -222,15 +219,16 @@ class MathGameState extends MusicBeatState
             switch (endState)
             {
                case 'won':
-                  PlayState.SONG = Song.loadFromJson('roofs');
+                  PlayState.SONG = Song.loadFromJson(Highscore.formatSong('roofs', PlayState.storyDifficulty));
                   PlayState.storyWeek = 7;
+                  if (PlayState.shaggyVoice) PlayState.formoverride = "redshaggy";
 
                   FlxG.save.data.roofsUnlocked = true;
                   FlxG.save.flush();
 
-                  LoadingState.loadAndSwitchState(new PlayState());
+                  FlxG.switchState(new PlayState());
                case 'failed':
-                  accessThroughTerminal ? FlxG.switchState(new MainMenuState()) : LoadingState.loadAndSwitchState(new PlayState());      
+                  accessThroughTerminal ? FlxG.switchState(new MainMenuState()) : FlxG.switchState(new PlayState());      
             }
          }
       }
