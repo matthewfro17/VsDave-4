@@ -33,11 +33,13 @@ class SelectLanguageState extends MusicBeatState
       FlxG.sound.music.fadeIn(2, 0, 0.7);
 
       langaugeList = LanguageManager.getLanguages();
-      
+
+      #if (flixel < "5.2.2")
       bg = new FlxBackdrop(Paths.image('ui/checkeredBG', 'preload'), 1, 1, true, true, 1, 1);
       bg.antialiasing = true;
       bg.color = langaugeList[curLanguageSelected].langaugeColor;
       add(bg);
+      #end
 
       selectLanguage = new FlxText(0, (FlxG.height / 2) - 300, FlxG.width, "Please Select A Language", 45);
       selectLanguage.setFormat("Comic Sans MS Bold", 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
