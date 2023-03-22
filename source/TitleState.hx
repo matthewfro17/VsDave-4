@@ -51,10 +51,7 @@ class TitleState extends MusicBeatState
 	var loopEyeTween:FlxTween;
 
 	override public function create():Void
-	{
-		Paths.clearStoredMemory();
-		Paths.clearUnusedMemory();
-
+	{		
 		fun = FlxG.random.int(0, 999);
 		if(fun == 1)
 		{
@@ -84,6 +81,12 @@ class TitleState extends MusicBeatState
 
 		Main.fps.visible = !FlxG.save.data.disableFps;
 
+		CompatTool.initSave();
+		if(CompatTool.save.data.compatMode == null)
+        {
+            FlxG.switchState(new CompatWarningState());
+        }
+
 		if (FlxG.save.data.weekUnlocked != null)
 		{
 			// FIX LATER!!!
@@ -106,6 +109,7 @@ class TitleState extends MusicBeatState
 		#elseif CHARTING
 		FlxG.switchState(new ChartingState());
 		#else
+
 		new FlxTimer().start(1, function(tmr:FlxTimer)
 		{
 			startIntro();
@@ -153,6 +157,8 @@ class TitleState extends MusicBeatState
 		{
 			logoBl.frames = Paths.getSparrowAtlas('ui/logoBumpinExpunged');
 			Application.current.window.title = "Friday Night Funkin' | VS. EXPUNGED";
+			FlxG.save.data.modchart = false;
+			FlxG.save.data.botplay = false;
 		}
 		logoBl.antialiasing = true;
 		logoBl.animation.addByPrefix('bump', 'logo bumpin', 24);
@@ -289,6 +295,20 @@ class TitleState extends MusicBeatState
 				pressedEnter = true;
 			#end
 		}
+
+		#if debug
+		if (FlxG.keys.justPressed.S)
+		{
+			PlayState.SONG = Song.loadFromJson("bonus-song");
+			//PlayState.formoverride = 'shaggy';
+			LoadingState.loadAndSwitchState(new PlayState());
+		}
+		#end
+		
+		if (FlxG.keys.justPressed.ALT)
+		{
+			FlxG.switchState(new CompatWarningState());
+		}
 		
 		if (pressedEnter && !transitioning && skippedIntro)
 		{
@@ -301,6 +321,9 @@ class TitleState extends MusicBeatState
 
 			new FlxTimer().start(2, function(tmr:FlxTimer)
 			{
+				#if debug
+				FlxG.save.data.exploitationState = null;
+				#end
 				FlxG.switchState(FlxG.save.data.alreadyGoneToWarningScreen && FlxG.save.data.exploitationState != 'playing' ? new MainMenuState() : new OutdatedSubState());
 			});
 		}
@@ -339,41 +362,40 @@ class TitleState extends MusicBeatState
 	
 			if (danceLeft) gfDance.animation.play('danceRight');
 			else gfDance.animation.play('danceLeft');
-	
-			switch (curBeat)
-			{
-				case 3:
-					addMoreText('TheBuilderXD');
-					addMoreText('Erizur, T5mpler');
-				case 4:
-					addMoreText('and our wonderful contributors!');
-				case 5:
-					deleteCoolText();
-				case 6:
-					createCoolText(['Supernovae by ArchWk']);
-				case 7:
-					addMoreText('Glitch by The Boneyard');
-				case 8:
-					deleteCoolText();
-				case 9:
-					createCoolText([curWacky[0]]);
-				case 10:
-					addMoreText(curWacky[1]);
-				case 11:
-					deleteCoolText();
-				case 12:
-					addMoreText("Friday Night Funkin'");
-				case 13:
-					addMoreText(awaitingExploitation ? 'Vs. Expunged' : 'VS. Dave');
-				case 14:
-					addMoreText(!awaitingExploitation  ? 'and Bambi' : 'The Full Mod');
-				case 15:
-					var text:String = !awaitingExploitation  ? 'The Full Mod' : 'HAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHA\nHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHA\nHAHAHHAHAHAHAHHAHAHAHAHHAHAHAHAHHAHA';
-					if (awaitingExploitation) FlxG.sound.play(Paths.sound('evilLaugh', 'shared'), 0.7);
-					addMoreText(text);
-				case 16:
-					skipIntro();
-			}
+		}
+		switch (curBeat)
+		{
+			case 3:
+				addMoreText('TheBuilderXD');
+				addMoreText('Erizur, T5mpler');
+			case 4:
+				addMoreText('and our wonderful contributors!');
+			case 5:
+				deleteCoolText();
+			case 6:
+				createCoolText(['Supernovae by ArchWk']);
+			case 7:
+				addMoreText('Glitch by The Boneyard');
+			case 8:
+				deleteCoolText();
+			case 9:
+				createCoolText([curWacky[0]]);
+			case 10:
+				addMoreText(curWacky[1]);
+			case 11:
+				deleteCoolText();
+			case 12:
+				addMoreText("Friday Night Funkin'");
+			case 13:
+				addMoreText(awaitingExploitation ? 'Vs. Expunged' : 'VS. Dave');
+			case 14:
+				addMoreText(!awaitingExploitation  ? 'and Bambi' : 'The Full Mod');
+			case 15:
+				var text:String = !awaitingExploitation  ? 'The Full Mod' : 'HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA\nHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA\nHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA';
+				if (awaitingExploitation) FlxG.sound.play(Paths.sound('evilLaugh', 'shared'), 0.7);
+				addMoreText(text);
+			case 16:
+				skipIntro();
 		}
 	}
 
