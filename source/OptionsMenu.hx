@@ -1,6 +1,5 @@
 package;
 
-import mobile.MobileControlsSubState;
 import flixel.tweens.FlxTween;
 import flixel.tweens.FlxEase;
 import Controls.KeyboardScheme;
@@ -14,7 +13,7 @@ import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxMath;
 import flixel.text.FlxText;
 import flixel.util.FlxColor;
-import openfl.utils.Assets;
+import lime.utils.Assets;
 import flixel.util.FlxTimer;
 #if desktop
 import Discord.DiscordClient;
@@ -43,9 +42,6 @@ class OptionsMenu extends MusicBeatState
 	var curSongBarOptionSelected:Int;
 	override function create()
 	{
-		Paths.clearStoredMemory();
-		Paths.clearUnusedMemory();
-
 		#if desktop
 		DiscordClient.changePresence("In the Options Menu", null);
 		#end
@@ -94,7 +90,11 @@ class OptionsMenu extends MusicBeatState
 			+ "\n" + (FlxG.save.data.noteCamera ? LanguageManager.getTextString('option_noteCamera_on') : LanguageManager.getTextString('option_noteCamera_off'))
 			+ "\n" + LanguageManager.getTextString('option_change_langauge')
 			+ "\n" + (FlxG.save.data.disableFps ? LanguageManager.getTextString('option_enable_fps') : LanguageManager.getTextString('option_disable_fps'))
-			+ "\n" + LanguageManager.getTextString('option_mobile_controls')
+			+ "\n" + (CompatTool.save.data.compatMode ? LanguageManager.getTextString('option_enable_compat') : LanguageManager.getTextString('option_disable_compat'))
+			+ "\n" + (FlxG.save.data.modchart ? 'Mod Chart OFF' : 'Mod Chart ON')
+			#if debug
+			+ "\n" + (FlxG.save.data.botplay ? 'Bot Play ON' : 'Bot Play OFF')
+			#end
 			);
 
 		grpControls = new FlxTypedGroup<Alphabet>();
@@ -116,10 +116,6 @@ class OptionsMenu extends MusicBeatState
 		versionShit.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		add(versionShit);
 
-		#if mobile
-		addVirtualPad(LEFT_FULL, A_B);
-		#end
-
 		super.create();
 	}
 
@@ -137,6 +133,7 @@ class OptionsMenu extends MusicBeatState
 		if (controls.BACK)
 		{
 			FlxG.save.flush();
+			CompatTool.save.flush();
 			FlxG.switchState(new MainMenuState());
 		}
 		if (controls.UP_P)
@@ -154,8 +151,7 @@ class OptionsMenu extends MusicBeatState
 		{
 			FlxG.save.data.offset--;
 			versionShit.text = "Offset (Left, Right): " + FlxG.save.data.offset;
-		}
-
+		}	
 		if (controls.ACCEPT)
 		{
 			grpControls.remove(grpControls.members[curSelected]);
@@ -204,7 +200,16 @@ class OptionsMenu extends MusicBeatState
 					Main.fps.visible = !FlxG.save.data.disableFps;
 					updateGroupControls(FlxG.save.data.disableFps ? LanguageManager.getTextString('option_enable_fps') : LanguageManager.getTextString('option_disable_fps'), 10, 'Vertical');
 				case 11:
-					openSubState(new MobileControlsSubState());
+					CompatTool.save.data.compatMode = !CompatTool.save.data.compatMode;
+					updateGroupControls(CompatTool.save.data.compatMode ? LanguageManager.getTextString('option_enable_compat') : LanguageManager.getTextString('option_disable_compat'), 11, 'Vertical');
+				case 12:
+					if (!awaitingExploitation) FlxG.save.data.modchart = !FlxG.save.data.modchart;
+					updateGroupControls(FlxG.save.data.modchart ? 'Mod Chart OFF' : 'Mod Chart ON', 12, 'Vertical');
+				#if debug
+				case 13:
+					if (!awaitingExploitation) FlxG.save.data.botplay = !FlxG.save.data.botplay;
+					updateGroupControls(FlxG.save.data.botplay ? 'Bot Play ON' : 'Bot Play OFF', 13, 'Vertical');
+				#end
 			}
 		}
 	}
