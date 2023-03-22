@@ -16,9 +16,10 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxStringUtil;
-import openfl.utils.Assets;
+import lime.utils.Assets;
 import flixel.FlxObject;
 import flixel.addons.util.FlxAsyncLoop;
+#if sys import sys.FileSystem; #end
 #if desktop import Discord.DiscordClient; #end
 
 using StringTools;
@@ -29,6 +30,7 @@ class FreeplayState extends MusicBeatState
 
 	var selector:FlxText;
 	var curSelected:Int = 0;
+	var curDifficulty:Int = 1;
 
 	var bg:FlxSprite = new FlxSprite();
 
@@ -80,6 +82,14 @@ class FreeplayState extends MusicBeatState
 		'vs-dave-rap-two'
 	];
 
+	public static var noExtraKeys:Array<String> = 
+	[
+		'five-nights',
+		'vs-dave-rap',
+		'vs-dave-rap-two',
+		'overdrive'
+	];
+
 	private var camFollow:FlxObject;
 	private static var prevCamFollow:FlxObject;
 
@@ -111,9 +121,6 @@ class FreeplayState extends MusicBeatState
 
 	override function create()
 	{
-		Paths.clearStoredMemory();
-		Paths.clearUnusedMemory();
-
 		#if desktop DiscordClient.changePresence("In the Freeplay Menu", null); #end
 		
 		awaitingExploitation = (FlxG.save.data.exploitationState == 'awaiting');
@@ -248,10 +255,6 @@ class FreeplayState extends MusicBeatState
 			}
 		}
 
-		#if mobile
-		addVirtualPad(LEFT_RIGHT, A_B);
-		#end
-
 		super.create();
 	}
 
@@ -378,7 +381,6 @@ class FreeplayState extends MusicBeatState
 		FlxTween.tween(scoreText,{y: -5},0.5,{ease: FlxEase.expoInOut});
 		FlxTween.tween(diffText,{y: 30},0.5,{ease: FlxEase.expoInOut});
 		
-
 		for (song in 0...grpSongs.length)
 		{
 			grpSongs.members[song].unlockY = true;
@@ -393,10 +395,6 @@ class FreeplayState extends MusicBeatState
 		}
 
 		changeSelection();
-
-		#if mobile
-		addVirtualPad(UP_DOWN, A_B_C);
-		#end
 	}
 
 	public function addSong(songName:String, weekNum:Int, songCharacter:String)
@@ -490,7 +488,7 @@ class FreeplayState extends MusicBeatState
 			scoreText = null;
 			diffText = null;
 			characterSelectText = null;
-
+			
 			if (controls.LEFT_P && canInteract)
 			{
 				UpdatePackSelection(-1);
@@ -518,9 +516,6 @@ class FreeplayState extends MusicBeatState
 						for (item in icons) { item.visible = false; }
 						for (item in titles) { item.visible = false; }
 
-						#if mobile
-						removeVirtualPad();
-						#end
 						GoToActualFreeplay();
 						resetPresses();
 						InMainFreeplayState = true;
@@ -553,6 +548,10 @@ class FreeplayState extends MusicBeatState
 				stringKey = 'down';
 				changeSelection(1);
 			}
+			if (controls.RIGHT_P)
+				changeDiff(1);
+			if (controls.LEFT_P)
+				changeDiff(-1);
 			if (controls.BACK && canInteract)
 			{				
 				loadingPack = true;
@@ -621,14 +620,10 @@ class FreeplayState extends MusicBeatState
 						iconArray = [];
 						curSelected = 0;
 						canInteract = true;
-						#if mobile
-						removeVirtualPad();
-						addVirtualPad(LEFT_RIGHT, A_B);
-						#end
 					}});
 				}
 			}
-			if (accepted && canInteract)
+			if (accepted && canInteract && (!noExtraKeys.contains(songs[curSelected].songName.toLowerCase()) || curDifficulty != 0))
 			{
 				switch (songs[curSelected].songName)
 				{
@@ -636,8 +631,9 @@ class FreeplayState extends MusicBeatState
 						FlxG.switchState(new TerminalState());
 					default:
 						FlxG.sound.music.fadeOut(1, 0);
-						PlayState.SONG = Song.loadFromJson(songs[curSelected].songName.toLowerCase());
+						PlayState.SONG = Song.loadFromJson(Highscore.formatSong(songs[curSelected].songName.toLowerCase(), curDifficulty));
 						PlayState.isStoryMode = false;
+						PlayState.storyDifficulty = curDifficulty;
 		
 						PlayState.characteroverride = "none";
 						PlayState.formoverride = "none";
@@ -646,8 +642,20 @@ class FreeplayState extends MusicBeatState
 						PlayState.storyWeek = songs[curSelected].week;
 						
 						packTransitionDone = false;
-						if (((FlxG.keys.pressed.CONTROL #if mobile || virtualPad.buttonC.pressed #end) || skipSelect.contains(PlayState.SONG.song.toLowerCase())) && PlayState.SONG.song.toLowerCase() != 'exploitation')
+						if ((FlxG.keys.pressed.CONTROL || skipSelect.contains(PlayState.SONG.song.toLowerCase())) && !(PlayState.SONG.song.toLowerCase() == 'exploitation' && !FlxG.save.data.modchart))
 						{
+							if (curDifficulty == 0) {
+								if (PlayState.SONG.song.toLowerCase() == 'roofs') {
+									PlayState.characteroverride = "shaggy";
+									PlayState.formoverride = "redshaggy";
+								} else if (PlayState.SONG.song.toLowerCase() == 'exploitation') {
+									PlayState.characteroverride = "shaggy";
+									PlayState.formoverride = "godshaggy";
+								} else {
+									PlayState.characteroverride = "shaggy";
+									PlayState.formoverride = "shaggy";
+								}
+							}
 							LoadingState.loadAndSwitchState(new PlayState());
 						}
 						else
@@ -688,19 +696,49 @@ class FreeplayState extends MusicBeatState
 		diffText.x -= diffText.width / 2;
 	}
 
+	function changeDiff(change:Int = 0)
+	{
+		curDifficulty += change;
+		if (curDifficulty < 0)
+			curDifficulty = 1;
+		if (curDifficulty > 1)
+			curDifficulty = 0;
+		#if !switch
+		intendedScore = Highscore.getScore(songs[curSelected].songName, curDifficulty);
+		#end
+		curChar = Highscore.getChar(songs[curSelected].songName, curDifficulty);
+		updateDifficultyText();
+	}
+
 	function updateDifficultyText()
 	{
-		switch (songs[curSelected].week)
+		var diff:String = 'HARD';
+		switch (curDifficulty)
 		{
-			case 3:
-				diffText.text = LanguageManager.getTextString('freeplay_finale') + " - " + curChar.toUpperCase();
-			case 10:
-				diffText.text = "RECURSED" + " - " + curChar.toUpperCase();
-			case 16:
-				diffText.text = LanguageManager.getTextString('freeplay_fucked') + " - " + curChar.toUpperCase();
-			default:
-				diffText.text = curChar.toUpperCase();
+			case 0:
+				if (songs[curSelected].week == 16)
+					diff = LanguageManager.getTextString('freeplay_fuckedek');
+				else
+					diff = LanguageManager.getTextString('freeplay_extrakeys');
+			case 1:
+				switch (songs[curSelected].week)
+				{
+					case 3:
+						diff = LanguageManager.getTextString('freeplay_finale');
+					case 10:
+						diff = "RECURSED";
+					case 16:
+						diff = LanguageManager.getTextString('freeplay_fucked');
+					default:
+						diff = LanguageManager.getTextString('freeplay_hard');
+				}
 		}
+		diffText.text = diff + " - " + curChar.toUpperCase();
+
+		if (noExtraKeys.contains(songs[curSelected].songName.toLowerCase()) && curDifficulty == 0)
+			diffText.color = FlxColor.GRAY;
+		else
+			diffText.color = FlxColor.WHITE;
 	}
 
 	function changeSelection(change:Int = 0)
@@ -744,14 +782,14 @@ class FreeplayState extends MusicBeatState
 		if (songs[curSelected].songName != 'Enter Terminal')
 		{
 			#if !switch
-			intendedScore = Highscore.getScore(songs[curSelected].songName);
+			intendedScore = Highscore.getScore(songs[curSelected].songName, curDifficulty);
 			#end
 
 			#if PRELOAD_ALL
 			FlxG.sound.playMusic(Paths.inst(songs[curSelected].songName), 0);
 			#end
 			
-			curChar = Highscore.getChar(songs[curSelected].songName);
+			curChar = Highscore.getChar(songs[curSelected].songName, curDifficulty);
 		}
 		
 		if (diffText != null)
