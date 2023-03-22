@@ -49,6 +49,35 @@ class ChangeKeybinds extends MusicBeatState
 		new ControlUI('Right', 'right'),
 		new ControlUI('Reset', 'reset'),
 		new ControlUI('Key5', 'key5'),
+		new ControlUI('Center', 'center'),
+		new ControlUI('6 or 7 KEY Left 1', 'lefta1'),
+		new ControlUI('6 or 7 KEY Up', 'upa'),
+		new ControlUI('6 or 7 KEY Right 1', 'righta1'),
+		new ControlUI('7 KEY Center', 'centera'),
+		new ControlUI('6 or 7 KEY Left 2', 'lefta2'),
+		new ControlUI('6 or 7 KEY Down', 'downa'),
+		new ControlUI('6 or 7 KEY Right 2', 'righta2'),
+		new ControlUI('9 KEY Left 1', 'leftb1'),
+		new ControlUI('9 KEY Down 1', 'downb1'),
+		new ControlUI('9 KEY Up 1', 'upb1'),
+		new ControlUI('9 KEY Right 1', 'rightb1'),
+		new ControlUI('9 KEY Center', 'centerb'),
+		new ControlUI('9 KEY Left 2', 'leftb2'),
+		new ControlUI('9 KEY Down 2', 'downb2'),
+		new ControlUI('9 KEY Up 2', 'upb2'),
+		new ControlUI('9 KEY Right 2', 'rightb2'),
+		new ControlUI('12 KEY Left 1', 'leftc1'),
+		new ControlUI('12 KEY Down 1', 'downc1'),
+		new ControlUI('12 KEY Up 1', 'upc1'),
+		new ControlUI('12 KEY Right 1', 'rightc1'),
+		new ControlUI('12 KEY Left 2', 'leftc2'),
+		new ControlUI('12 KEY Down 2', 'downc2'),
+		new ControlUI('12 KEY Up 2', 'upc2'),
+		new ControlUI('12 KEY Right 2', 'rightc2'),
+		new ControlUI('12 KEY Left 3', 'leftc3'),
+		new ControlUI('12 KEY Down 3', 'downc3'),
+		new ControlUI('12 KEY Up 3', 'upc3'),
+		new ControlUI('12 KEY Right 3', 'rightc3'),
 	];
 
 	var currentUIControl:ControlUI;
@@ -61,7 +90,7 @@ class ChangeKeybinds extends MusicBeatState
 	var curKeybindSelected:Int = 0;
 	var currentKeybind:FlxText;
 
-	var keybindPresets:Array<String> = ['Arrow Keys', 'WASD', 'DFJK', 'ASKL', 'ZX,.'];
+	var keybindPresets:Array<String> = ['WASD', 'DFJK', 'ASKL', 'ZX,.'];
 	var choosePreset:FlxText;
 	var preset:FlxText;
 	var presetLeft:FlxText;
@@ -96,20 +125,14 @@ class ChangeKeybinds extends MusicBeatState
 
 		camFollow = new FlxObject(FlxG.width / 2, selectableItems[curItemSelected].y);
 		FlxG.camera.follow(camFollow, 0.05);
-
+		
 		changeSelection();
-
-		#if mobile
-		addVirtualPad(LEFT_FULL, A_B);
-		#end
 
 		super.create();
 	}
 
 	override function update(elapsed:Float)
 	{
-		super.update(elapsed);
-
 		var left = controls.LEFT_P;
 		var down = controls.DOWN_P;
 		var up = controls.UP_P;
@@ -188,13 +211,13 @@ class ChangeKeybinds extends MusicBeatState
 
 				var keyID = FlxG.keys.firstJustPressed();
 
-				var keyBlacklist:Array<FlxKey> = [FlxKey.ENTER, FlxKey.SPACE, FlxKey.BACKSPACE, FlxKey.ESCAPE];
+				var keyBlacklist:Array<FlxKey> = [FlxKey.ENTER, FlxKey.BACKSPACE, FlxKey.ESCAPE];
 				if (keyID > -1)
 				{
 					if (keyBlacklist.contains(keyID))
 					{
 						FlxG.camera.shake(0.05, 0.1);
-						FlxG.sound.play(Paths.sound('missnote'), 0.9);
+						FlxG.sound.play(Paths.sound('missnote1'), 0.9);
 					}
 					else
 					{
@@ -207,7 +230,7 @@ class ChangeKeybinds extends MusicBeatState
 						if (controlKeybinds[otherKeybind] == keyJustPressed)
 						{
 							FlxG.camera.shake(0.05, 0.1);
-							FlxG.sound.play(Paths.sound('missnote'), 0.9);
+							FlxG.sound.play(Paths.sound('missnote1'), 0.9);
 
 							updateText(currentKeybind, false);
 							updateText(otherKeybindText, false);
@@ -228,7 +251,7 @@ class ChangeKeybinds extends MusicBeatState
 						FlxG.sound.play(Paths.sound('confirmMenu'));
 	
 						currentKeybind.text = keyJustPressed.toString();
-						
+
 						updateText(currentKeybind, false);
 						updateText(otherKeybindText, false);
 	
@@ -256,7 +279,9 @@ class ChangeKeybinds extends MusicBeatState
 
 		var keybindTexts:FlxTypedGroup<FlxText> = new FlxTypedGroup<FlxText>();
 
-		var control:FlxText = new FlxText((FlxG.width / 2) - 200, (preset.y + 125) + (order * 100), 0, uiControl.uiName + ":", 32);
+		var textx = 200;
+		if (order >= 7) textx = 400;
+		var control:FlxText = new FlxText((FlxG.width / 2) - textx, (preset.y + 125) + (order * 100), 0, uiControl.uiName + ":", 32);
 		control.setFormat("Comic Sans MS Bold", 32, FlxColor.WHITE, CENTER);
 		control.borderSize = 2;
 		control.antialiasing = true;
@@ -438,14 +463,16 @@ class ChangeKeybinds extends MusicBeatState
 
 	function updateText(text:FlxText, selected:Bool)
 	{
-		if (selected)
-		{
-			text.setFormat("Comic Sans MS Bold", 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-			text.borderSize = 2;
-		}
-		else
-		{
-			text.setFormat("Comic Sans MS Bold", 32, FlxColor.WHITE, CENTER);
+		if (text != null) {
+			if (selected)
+			{
+				text.setFormat("Comic Sans MS Bold", 32, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+				text.borderSize = 2;
+			}
+			else
+			{
+				text.setFormat("Comic Sans MS Bold", 32, FlxColor.WHITE, CENTER);
+			}
 		}
 	}
 }
